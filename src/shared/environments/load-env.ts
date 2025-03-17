@@ -11,7 +11,7 @@ export const config = {
     dbPassword: process.env.DB_PASSWORD,
     dbDatabase: process.env.DB_DATABASE,
     jwtSecretKey: process.env.JWT_SECRET_KEY,
-    expiresIn: process.env.JWT_EXPIRES_IN,
+    expiresIn: Number(process.env.JWT_EXPIRES_IN),
     msLogs: process.env.MS_LOGS,
     msEmail: process.env.MS_EMAIL,
     frontendUrl: process.env.FRONTEND_URL,
