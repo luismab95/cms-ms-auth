@@ -37,7 +37,8 @@
     "lib-database": "file:./lib-database-1.0.0.tar.gz",
     "moment": "^2.30.1",
     "reflect-metadata": "^0.2.0",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
@@ -49,6 +50,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.3.1",
     "@types/supertest": "^6.0.0",
+    "@types/winston": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.42.0",

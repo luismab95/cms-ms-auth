@@ -7,7 +7,7 @@ async function bootstrap() {
   const { port } = config.server;
 
   const app = await NestFactory.create(AppModule);
-
+  app.enableCors();
   app.setGlobalPrefix('ms-auth');
 
   await app.listen(port);

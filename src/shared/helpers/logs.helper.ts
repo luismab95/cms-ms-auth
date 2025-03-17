@@ -1,14 +1,33 @@
 import moment from 'moment';
 import { Request } from 'express';
 import { config } from '../environments/load-env';
-import { sendRequestPost } from './axios.helper';
+
+import { createLogger, format, transports } from 'winston';
+
+const { combine, timestamp, printf, colorize } = format;
+const logFormat = printf(({ level, message, timestamp }) => {
+  return `${timestamp} ${level}: ${message}`;
+});
+
+const logger = createLogger({
+  level: 'info',
+  format: combine(
+    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    colorize({ all: true }),
+    logFormat,
+  ),
+  transports: [
+    new transports.Console(),
+    new transports.File({ filename: 'combined.log' }),
+  ],
+});
 
 export class LoggingServiceImpl {
   async error(err: string, req?: Request): Promise<void> {
     const { msLogs, nodeEnv } = config.server;
     const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
 
-    if (nodeEnv === 'dev') {
+    if (nodeEnv === 'development') {
       console.error(timestamp, 'Error: ', err);
       return;
     }
@@ -29,10 +48,6 @@ export class LoggingServiceImpl {
       },
     };
 
-    sendRequestPost(`${msLogs}/logs`, log, {
-      headers: {
-        Authorization: ``,
-      },
-    });
+    logger.error('Error capturado:', log);
   }
 }
