@@ -154,9 +154,10 @@ export class AuthService {
   }
 
   async createSession(userLogin: UserI, ipAddress: string, info: string) {
-    const { id, email, firstname, lastname } = userLogin;
+    const { id, email, firstname, lastname, roleId } = userLogin;
     const token = generateRefreshToken({
       userId: id,
+      roleId,
       email,
       firstname,
       lastname,
@@ -169,6 +170,7 @@ export class AuthService {
     );
     return generateToken({
       userId: id,
+      roleId,
       email,
       firstname,
       lastname,
@@ -210,6 +212,7 @@ export class AuthService {
 
     const forgotPasswordToken = generateForgotPassword({
       email: userLogin.email,
+      roleId: userLogin.roleId,
       firstname: userLogin.firstname,
       lastname: userLogin.lastname,
       userId: userLogin.id,

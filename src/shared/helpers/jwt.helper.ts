@@ -5,6 +5,7 @@ import { ERR_401 } from '../constants/message.constants';
 
 export interface TokenInterface {
   userId: number;
+  roleId: number;
   sessionId?: number;
   email: string;
   firstname: string;
