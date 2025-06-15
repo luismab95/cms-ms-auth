@@ -24,7 +24,7 @@ const logger = createLogger({
 
 export class LoggingServiceImpl {
   async error(err: string, req?: Request): Promise<void> {
-    const { msLogs, nodeEnv } = config.server;
+    const { nodeEnv } = config.server;
     const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
 
     if (nodeEnv === 'development') {

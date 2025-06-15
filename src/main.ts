@@ -4,10 +4,16 @@ import { config } from './shared/environments/load-env';
 import { Database } from 'lib-database/src/shared/config/database';
 
 async function bootstrap() {
-  const { port } = config.server;
+  const { port, corsOrigin } = config.server;
 
   const app = await NestFactory.create(AppModule);
-  app.enableCors();
+
+  app.enableCors({
+    origin: corsOrigin,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: false,
+  });
+
   app.setGlobalPrefix('ms-auth');
 
   await app.listen(port);

@@ -12,9 +12,9 @@ export const config = {
     dbDatabase: process.env.DB_DATABASE,
     jwtSecretKey: process.env.JWT_SECRET_KEY,
     expiresIn: Number(process.env.JWT_EXPIRES_IN),
-    msLogs: process.env.MS_LOGS,
     msEmail: process.env.MS_EMAIL,
     frontendUrl: process.env.FRONTEND_URL,
     cryptoKey: process.env.CRYPTO_KEY,
+    corsOrigin: process.env.CORS_ORIGIN,
   },
 };
