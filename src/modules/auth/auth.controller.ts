@@ -14,6 +14,7 @@ import { AuthService } from './auth.service';
 import {
   ForgotPasswordDto,
   LoginAuthDto,
+  ResendOtpDto,
   ResetPasswordDto,
   TwoFactorAuthDto,
 } from './dto/auth.dto';
@@ -48,6 +49,17 @@ export class AuthController {
     twoFactorAuthDto.info = headers['x-device-info'];
     return {
       message: await this.authService.twoFactorAuth(twoFactorAuthDto),
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  @Post('resend-otp')
+  @UsePipes(new ValidationPipe())
+  async resendOtp(
+    @Body() resendOtpDto: ResendOtpDto,
+  ): Promise<ServiceResponseInterface<string>> {
+    return {
+      message: await this.authService.resendOtp(resendOtpDto),
       statusCode: HttpStatus.OK,
     };
   }

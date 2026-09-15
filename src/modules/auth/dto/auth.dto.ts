@@ -24,6 +24,12 @@ export class TwoFactorAuthDto {
   info?: string;
 }
 
+export class ResendOtpDto {
+  @IsEmail({}, { message: 'Correo electrónico no válido.' })
+  @IsNotEmpty({ message: 'Correo electrónico es requerido.' })
+  email: string;
+}
+
 export class ForgotPasswordDto {
   @IsEmail({}, { message: 'Correo electrónico no válido.' })
   @IsNotEmpty({ message: 'Correo electrónico es requerido.' })
@@ -69,4 +75,5 @@ export interface LoginAttemptI {
 
 export interface OtpUserI {
   otp: string;
+  createdAt: string;
 }

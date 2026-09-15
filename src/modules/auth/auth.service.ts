@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   ForgotPasswordDto,
   LoginAuthDto,
+  ResendOtpDto,
   ResetPasswordDto,
   TwoFactorAuthDto,
   UserI,
@@ -24,6 +25,7 @@ import { OK_200 } from 'src/shared/constants/message.constants';
 import { EmailInterface, sendMail } from 'src/shared/helpers/email.helper';
 import { config } from 'src/shared/environments/load-env';
 import { getParameter } from 'src/shared/helpers/parameter.helper';
+import moment = require('moment');
 
 @Injectable()
 export class AuthService {
@@ -125,11 +127,37 @@ export class AuthService {
     );
   }
 
+  async resendOtp(resendOtpDto: ResendOtpDto) {
+    const userLogin = await this.authRepository.findUser({
+      email: resendOtpDto.email,
+      password: '',
+    });
+
+    await this.generateOpt(userLogin, 'LOGIN');
+    return `Se ha enviado un código de verificación para inicio de sesión a la dirección de correo ${maskString(userLogin.email)}.`;
+  }
+
   async generateOpt(userLogin: UserI, type: 'LOGIN' | 'RESET-PASSWORD') {
+    const otpTimeResend = await getParameter('OTP_TIME_RESEND');
+    const lastOpt = await this.authRepository.findOtpUser(userLogin.id, type);
+    if (lastOpt) {
+      const validateDate = moment(lastOpt.createdAt).add(
+        otpTimeResend,
+        'seconds',
+      );
+
+      console.log(validateDate, lastOpt, otpTimeResend, moment());
+
+      if (!moment().isAfter(validateDate)) {
+        throw new HttpException(
+          'No puedes generar otro codigo de verificación en estos momentos, espera unos minutos y vuelve a intentarlo.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
+
     const otpType = (await getParameter('OTP_TYPE')) as
-      | 'NUMBER'
-      | 'LETTER'
-      | 'COMBINED';
+      'NUMBER' | 'LETTER' | 'COMBINED';
     const otpLength = await getParameter('OTP_LONG');
     const otp = randomCharacters(otpType, Number(otpLength));
     await this.authRepository.generateOpt(userLogin.id, type, otp);

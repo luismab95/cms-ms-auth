@@ -44,7 +44,7 @@ export class AuthRepository {
     const dataSource = Database.getConnection();
     const query = dataSource
       .createQueryBuilder()
-      .select(['o.otp as otp'])
+      .select(['o.otp as otp', 'o.created_at as "createdAt"'])
       .from(OtpUser, 'o')
       .where('o.used = :used', { used: false })
       .andWhere('o.type = :type', { type })
