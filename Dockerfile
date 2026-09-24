@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY lib-database-1.0.0.tar.gz ./
 
-RUN npm ci
+RUN npm i
 
 COPY . .
 
@@ -27,7 +27,7 @@ ENV NODE_ENV=production
 COPY package*.json ./
 COPY lib-database-1.0.0.tar.gz ./
 
-RUN npm ci --omit=dev \
+RUN npm i --omit=dev \
     && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
