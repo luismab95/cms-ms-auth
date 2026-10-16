@@ -81,7 +81,7 @@ pnpm install
 
 Configure the environment variables required by the application before running it.
 
-Create a `.env` file in the project root if your configuration uses environment files.
+Create a `.env` file in the project root if your configuration uses environment files (review .env.example).
 
 Example:
 
