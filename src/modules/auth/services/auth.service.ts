@@ -2,23 +2,22 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import moment from 'moment';
 import {
   comparePasswords,
-  hashPassword,
-} from '@shared/helpers/bcrypt.helper.js';
-import { OK_200 } from '@shared/constants/message.constants.js';
-import { sendMail } from '@shared/helpers/email.helper.js';
-import {
+  maskString,
+  getParameter,
+  randomCharacters,
+  sendMail,
   generateRefreshToken,
   generateToken,
   verifyToken,
   TokenInterface,
+  OK_200,
   generateForgotPassword,
-} from '@shared/helpers/jwt.helper.js';
-import { getParameter } from '@shared/helpers/parameter.helper.js';
-import { randomCharacters } from '@shared/helpers/random.helper.js';
-import { maskString } from '@shared/helpers/string.helper.js';
-import { EmailInterface } from '@shared/interfaces/email.interface.js';
-import { config } from '@shared/environments/load-env.js';
-
+  hashPassword,
+  EmailI,
+  ParameterI,
+  config,
+} from 'cms-lib-resources';
+import { ParameterRepository } from '@shared/repositories/parameter.repository.js';
 import { AuthRepository } from '../repositories/auth.repository.js';
 import {
   ForgotPasswordDto,
@@ -31,7 +30,10 @@ import {
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly authRepository: AuthRepository) {}
+  constructor(
+    private readonly authRepository: AuthRepository,
+    private readonly parameterRepository: ParameterRepository,
+  ) {}
 
   async login(loginAuthDto: LoginAuthDto) {
     const userLogin = await this.authRepository.findUser(loginAuthDto);
@@ -41,6 +43,7 @@ export class AuthService {
         'La cuenta se encuentra inaccesible; puede estar bloqueada o no existe.',
         HttpStatus.BAD_REQUEST,
       );
+    const parameters = await this.parameterRepository.getParameters();
 
     const isMatch = await comparePasswords(
       loginAuthDto.password,
@@ -48,7 +51,7 @@ export class AuthService {
     );
 
     if (!isMatch) {
-      const bloqueUser = await this.createAttemptLogin(userLogin);
+      const bloqueUser = await this.createAttemptLogin(userLogin, parameters);
       if (bloqueUser) {
         await this.authRepository.updatedStatusAttempt(userLogin.id, false);
         throw new HttpException(
@@ -63,7 +66,7 @@ export class AuthService {
     }
 
     if (userLogin.twoFactorAuth) {
-      await this.generateOpt(userLogin, 'LOGIN');
+      await this.generateOpt(userLogin, 'LOGIN', parameters);
       return `Se ha enviado un código de verificación para inicio de sesión a la dirección de correo ${maskString(userLogin.email)}.`;
     }
 
@@ -99,10 +102,11 @@ export class AuthService {
         HttpStatus.BAD_REQUEST,
       );
     }
+    const parameters = await this.parameterRepository.getParameters();
 
     const isMatch = twoFactorAuthDto.otp === findOtpUser.otp;
     if (!isMatch) {
-      const bloqueUser = await this.createAttemptLogin(userLogin);
+      const bloqueUser = await this.createAttemptLogin(userLogin, parameters);
       if (bloqueUser) {
         await this.authRepository.updatedStatusAttempt(userLogin.id, false);
         throw new HttpException(
@@ -141,12 +145,20 @@ export class AuthService {
         HttpStatus.BAD_REQUEST,
       );
 
-    await this.generateOpt(userLogin, 'LOGIN');
+    const parameters = await this.parameterRepository.getParameters();
+    await this.generateOpt(userLogin, 'LOGIN', parameters);
     return `Se ha enviado un código de verificación para inicio de sesión a la dirección de correo ${maskString(userLogin.email)}.`;
   }
 
-  async generateOpt(userLogin: UserI, type: 'LOGIN' | 'RESET-PASSWORD') {
-    const otpTimeResend = await getParameter('OTP_TIME_RESEND');
+  async generateOpt(
+    userLogin: UserI,
+    type: 'LOGIN' | 'RESET-PASSWORD',
+    parameters: ParameterI[],
+  ) {
+    const otpTimeResend = await getParameter(
+      parameters.find((p) => p.code === 'OTP_TIME_RESEND'),
+      'OTP_TIME_RESEND',
+    );
     const lastOpt = await this.authRepository.findOtpUser(userLogin.id, type);
     if (lastOpt) {
       const validateDate = moment(lastOpt.createdAt).add(
@@ -162,28 +174,45 @@ export class AuthService {
       }
     }
 
-    const otpType = (await getParameter('OTP_TYPE')) as
-      'NUMBER' | 'LETTER' | 'COMBINED';
-    const otpLength = await getParameter('OTP_LONG');
+    const otpType = (await getParameter(
+      parameters.find((p) => p.code === 'OTP_TYPE'),
+      'OTP_TYPE',
+    )) as 'NUMBER' | 'LETTER' | 'COMBINED';
+    const otpLength = await getParameter(
+      parameters.find((p) => p.code === 'OTP_LONG'),
+      'OTP_LONG',
+    );
     const otp = randomCharacters(otpType, Number(otpLength));
     await this.authRepository.generateOpt(userLogin.id, type, otp);
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
-    const URlStatics = await getParameter('APP_STATICS_URL');
-    const logoMail = await getParameter('LOGO_MAIL');
+    const URlStatics = await getParameter(
+      parameters.find((p) => p.code === 'APP_STATICS_URL'),
+      'APP_STATICS_URL',
+    );
+    const logoMail = await getParameter(
+      parameters.find((p) => p.code === 'LOGO_MAIL'),
+      'LOGO_MAIL',
+    );
     const emailData = {
       templateName: 'login',
       subject: 'Código OTP para Inicio de Sesión',
       to: userLogin.email,
       context: {
         fullName: `${userLogin.firstname} ${userLogin.lastname}`,
-        companyName: await getParameter('COMPANY_NAME'),
-        mailFooter: await getParameter('COMPANY_MAIL'),
+        companyName: await getParameter(
+          parameters.find((p) => p.code === 'COMPANY_NAME'),
+          'COMPANY_NAME',
+        ),
+        mailFooter: await getParameter(
+          parameters.find((p) => p.code === 'COMPANY_MAIL'),
+          'COMPANY_MAIL',
+        ),
         imageHeader: `${URlStatics}/${logoMail}`,
         year: currentYear,
         code: otp,
       },
-    } as EmailInterface;
+    } as EmailI;
     sendMail(emailData);
   }
 
@@ -212,11 +241,14 @@ export class AuthService {
     });
   }
 
-  async createAttemptLogin(userLogin: UserI) {
+  async createAttemptLogin(userLogin: UserI, parameters: ParameterI[]) {
     const findAttempt = await this.authRepository.getLastAttempt(userLogin.id);
     const attempt = findAttempt === undefined ? 1 : findAttempt.attempt + 1;
 
-    const attemptParameter = await getParameter('APP_ATTEMPS_LOGIN');
+    const attemptParameter = await getParameter(
+      parameters.find((p) => p.code === 'APP_ATTEMPS_LOGIN'),
+      'APP_ATTEMPS_LOGIN',
+    );
 
     await this.authRepository.createAttempt(userLogin.id, attempt);
     if (attempt >= Number(attemptParameter)) {
@@ -233,6 +265,7 @@ export class AuthService {
   }
 
   async forgorPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const parameters = await this.parameterRepository.getParameters();
     const userLogin = await this.authRepository.findUser({
       email: forgotPasswordDto.email,
       password: '',
@@ -255,21 +288,33 @@ export class AuthService {
     const { frontendUrl } = config.server;
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
-    const URlStatics = await getParameter('APP_STATICS_URL');
-    const logoMail = await getParameter('LOGO_MAIL');
+    const URlStatics = await getParameter(
+      parameters.find((p) => p.code === 'APP_STATICS_URL'),
+      'APP_STATICS_URL',
+    );
+    const logoMail = await getParameter(
+      parameters.find((p) => p.code === 'LOGO_MAIL'),
+      'LOGO_MAIL',
+    );
     const emailData = {
       templateName: 'forgot-password',
       subject: 'Restablecer contraseña',
       to: userLogin.email,
       context: {
         fullName: `${userLogin.firstname} ${userLogin.lastname}`,
-        companyName: await getParameter('COMPANY_NAME'),
-        mailFooter: await getParameter('COMPANY_MAIL'),
+        companyName: await getParameter(
+          parameters.find((p) => p.code === 'COMPANY_NAME'),
+          'COMPANY_NAME',
+        ),
+        mailFooter: await getParameter(
+          parameters.find((p) => p.code === 'COMPANY_MAIL'),
+          'COMPANY_MAIL',
+        ),
         imageHeader: `${URlStatics}/${logoMail}`,
         year: currentYear,
         link: `${frontendUrl}/auth/reset-password?token=${forgotPasswordToken}`,
       },
-    } as EmailInterface;
+    } as EmailI;
     sendMail(emailData);
     return `Se ha enviado un enlace para resetear la contraseña a la dirección de correo ${maskString(userLogin.email)}.`;
   }

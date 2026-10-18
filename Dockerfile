@@ -15,6 +15,7 @@ FROM base AS deps
 
 COPY package.json pnpm-lock.yaml ./
 COPY cms-lib-database-0.0.1.tgz ./
+COPY cms-lib-resources-0.0.1.tgz ./
 
 RUN pnpm install --frozen-lockfile
 
@@ -36,6 +37,7 @@ ENV NODE_ENV=production
 
 COPY package.json pnpm-lock.yaml ./
 COPY cms-lib-database-0.0.1.tgz ./
+COPY cms-lib-resources-0.0.1.tgz ./
 
 RUN pnpm install --prod --frozen-lockfile \
     && pnpm store prune

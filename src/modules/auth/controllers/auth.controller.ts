@@ -10,6 +10,7 @@ import {
   Patch,
   Delete,
 } from '@nestjs/common';
+import { ServiceResponseI } from 'cms-lib-resources';
 import {
   LoginAuthDto,
   TwoFactorAuthDto,
@@ -18,7 +19,6 @@ import {
   ResetPasswordDto,
 } from '../dto/auth.dto.js';
 import { AuthService } from '../services/auth.service.js';
-import { ServiceResponseI } from '@shared/interfaces/response.interface.js';
 
 @Controller('auth')
 export class AuthController {

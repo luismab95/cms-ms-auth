@@ -1,10 +1,12 @@
 import { NestFactory } from '@nestjs/core';
+import { config as resourcesConfig } from 'cms-lib-resources';
 import { Database } from 'cms-lib-database';
 import { config } from '@shared/environments/load-env.js';
 import { AppModule } from './app.module.js';
 
 async function bootstrap() {
-  const { port, corsOrigin } = config.server;
+  const { port } = config.server;
+  const { corsOrigin } = resourcesConfig.server;
 
   const app = await NestFactory.create(AppModule);
   app.enableCors({
@@ -13,7 +15,7 @@ async function bootstrap() {
     credentials: false,
   });
   app.setGlobalPrefix('ms-auth');
-  
+
   await app.listen(port!);
   await Database.connect();
 

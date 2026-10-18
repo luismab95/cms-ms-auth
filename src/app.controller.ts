@@ -1,6 +1,6 @@
 import { Controller, Get, HttpStatus } from '@nestjs/common';
+import { ServiceResponseI } from 'cms-lib-resources';
 import { AppService } from './app.service.js';
-import { ServiceResponseI } from '@shared/interfaces/response.interface.js';
 
 @Controller()
 export class AppController {
