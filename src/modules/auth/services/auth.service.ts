@@ -9,7 +9,7 @@ import {
   generateRefreshToken,
   generateToken,
   verifyToken,
-  TokenInterface,
+  TokenI,
   OK_200,
   generateForgotPassword,
   hashPassword,
@@ -259,7 +259,7 @@ export class AuthService {
   }
 
   async signOut(token: string) {
-    const tokenPayload = verifyToken(token) as TokenInterface;
+    const tokenPayload = verifyToken(token) as TokenI;
     await this.authRepository.updatedSession(tokenPayload.sessionId!, false);
     return OK_200;
   }
@@ -320,7 +320,7 @@ export class AuthService {
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto) {
-    const tokenPayload = verifyToken(resetPasswordDto.token) as TokenInterface;
+    const tokenPayload = verifyToken(resetPasswordDto.token) as TokenI;
 
     const userLogin = await this.authRepository.findUser({
       email: tokenPayload.email,

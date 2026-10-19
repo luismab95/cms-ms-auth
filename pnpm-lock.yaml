@@ -1038,7 +1038,7 @@ packages:
     engines: {node: '>=24.20.*', npm: '>=11.19.*'}
 
   cms-lib-resources@file:cms-lib-resources-0.0.1.tgz:
-    resolution: {integrity: sha512-C+u3RQVQV6H6sReC1gO1YwGOA8vgPhE0fE6w9a8favXdGhMgdRdQGtwV0DGZL0rpSHLZfMVj/gySUSnGBIl8ng==, tarball: file:cms-lib-resources-0.0.1.tgz}
+    resolution: {integrity: sha512-NGe/JbS/S3Rgnbfvn7QFWWxkKsyQCUwuT5kDIa6xYbeA/rZNfQDiA//jlnz6vaoT9l4spx4BEwDQx+RoooHQeA==, tarball: file:cms-lib-resources-0.0.1.tgz}
     version: 0.0.1
     engines: {node: '>=24.20.*', npm: '>=11.19.*'}
 
