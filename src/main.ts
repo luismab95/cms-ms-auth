@@ -9,6 +9,7 @@ async function bootstrap() {
   const { corsOrigin } = resourcesConfig.server;
 
   const app = await NestFactory.create(AppModule);
+  app.enableShutdownHooks();
   app.enableCors({
     origin: corsOrigin,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
