@@ -9,6 +9,7 @@ import {
   Param,
   Patch,
   Delete,
+  Get,
 } from '@nestjs/common';
 import { ServiceResponseI } from 'cms-lib-resources';
 import {
@@ -17,12 +18,33 @@ import {
   ResendOtpDto,
   ForgotPasswordDto,
   ResetPasswordDto,
+  InitializerI,
+  UserDefaultPwdDto,
 } from '../dto/auth.dto.js';
 import { AuthService } from '../services/auth.service.js';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Get('initializer')
+  async initializer(): Promise<ServiceResponseI<InitializerI | undefined>> {
+    return {
+      message: await this.authService.initializer(),
+      statusCode: HttpStatus.OK,
+    };
+  }
+
+  @Post('initializer')
+  @UsePipes(new ValidationPipe())
+  async setUserDefaultPwd(
+    @Body() userDefaultPwd: UserDefaultPwdDto,
+  ): Promise<ServiceResponseI<string>> {
+    return {
+      message: await this.authService.setUserDefaultPwd(userDefaultPwd),
+      statusCode: HttpStatus.OK,
+    };
+  }
 
   @Post('login')
   @UsePipes(new ValidationPipe())

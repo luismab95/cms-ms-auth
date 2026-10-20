@@ -1,4 +1,11 @@
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsEmail,
+  IsNotEmpty,
+  IsNumber,
+  ValidateNested,
+} from 'class-validator';
 
 export class LoginAuthDto {
   @IsEmail({}, { message: 'Correo electrónico no válido.' })
@@ -42,6 +49,41 @@ export class ResetPasswordDto {
 
   @IsNotEmpty({ message: 'Contraseña es requerido.' })
   password: string;
+}
+
+export class UserEmailDto {
+  @IsNotEmpty({ message: 'Contraseña es requerido.' })
+  password: string;
+  @IsEmail({}, { message: 'Correo electrónico no válido.' })
+  @IsNotEmpty({ message: 'Correo electrónico es requerido.' })
+  email: string;
+  @IsNumber({}, { message: 'Id no válido.' })
+  @IsNotEmpty({ message: 'Id es requerido.' })
+  id: number;
+}
+
+export class UserDefaultPwdDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UserEmailDto)
+  users: UserEmailDto[];
+}
+
+export interface InitializerI {
+  id: number;
+  hash: string;
+  status: boolean;
+  userPwd: boolean;
+  users?: InitialUserI[];
+}
+
+export interface InitialUserI {
+  id: number;
+  email: string;
+  roleId: number;
+  roleCode: string;
+  roleName: string;
+  roleDescription: string;
 }
 
 export interface UserI {

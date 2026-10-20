@@ -18,6 +18,8 @@ import {
   config,
 } from 'cms-lib-resources';
 import { ParameterRepository } from '@shared/repositories/parameter.repository.js';
+import { InitializerRepository } from '@shared/repositories/initializate.repository.js';
+import { UserRepository } from '@shared/repositories/user.repository.js';
 import { AuthRepository } from '../repositories/auth.repository.js';
 import {
   ForgotPasswordDto,
@@ -25,14 +27,18 @@ import {
   ResendOtpDto,
   ResetPasswordDto,
   TwoFactorAuthDto,
+  UserDefaultPwdDto,
   UserI,
 } from '../dto/auth.dto.js';
+import { Database } from 'cms-lib-database';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly parameterRepository: ParameterRepository,
+    private readonly initializerRepository: InitializerRepository,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async login(loginAuthDto: LoginAuthDto) {
@@ -337,5 +343,31 @@ export class AuthService {
     await this.authRepository.updatedUser(userLogin.id, userLogin);
 
     return 'Tu contraseña ha sido restablecida.';
+  }
+
+  async initializer() {
+    try {
+      const result = await this.initializerRepository.find();
+      if (result === undefined) return result;
+      const users = await this.userRepository.get();
+      return { ...result, users };
+    } catch (error) {
+      console.log(error);
+
+      return undefined;
+    }
+  }
+
+  async setUserDefaultPwd(userDefaultPwd: UserDefaultPwdDto) {
+    const datasource = Database.getConnection();
+    await datasource.transaction(async (cnx) => {
+      for (const user of userDefaultPwd.users) {
+        user.password = await hashPassword(user.password);
+        await this.userRepository.update(user, cnx);
+      }
+      await this.initializerRepository.update(cnx);
+    });
+
+    return OK_200;
   }
 }
